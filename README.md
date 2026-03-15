@@ -60,7 +60,7 @@ trivia/
 
 1. Download or clone the repository
 
-git clone https://github.com/nilupuleejayasinghe40@gmail.com/TriviaQuest_web_app.git
+git clone https://github.com/nilupuleejayasinghe40/TriviaQuest_web_app
 
 2. Open the project folder
 
