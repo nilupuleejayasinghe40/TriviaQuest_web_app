@@ -24,8 +24,8 @@ This project was developed as an academic project to demonstrate front-end web d
 
 ## Technologies Used
 
-- HTML5
-- CSS3
+- HTML
+- CSS
 - JavaScript
 - Bootstrap
 - Browser LocalStorage
