@@ -1,3 +1,40 @@
+<?php
+require_once '../includes/db.php';
+require_once '../includes/functions.php';
+
+$error = '';
+$success = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = clean($_POST['name'] ?? '');
+    $email = clean($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm = $_POST['confirm_password'] ?? '';
+
+    if (empty($name) || empty($email) || empty($password)) {
+        $error = 'All fields are required';
+    } elseif (strlen($name) < 2) {
+        $error = 'Name must be at least 2 characters';
+    } elseif ($password !== $confirm) {
+        $error = 'Passwords do not match';
+    } elseif (strlen($password) < 6) {
+        $error = 'Password must be at least 6 characters';
+    } else {
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+
+        if ($stmt->fetch()) {
+            $error = 'An account with this email already exists';
+        } else {
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
+            $stmt->execute([$name, $email, $hash]);
+            $success = 'Account created successfully! Redirecting to login...';
+            header("refresh:2;url=login.php");
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
@@ -8,7 +45,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
   <!-- Theme toggle floating -->
@@ -30,56 +67,63 @@
         <h2>Create Account</h2>
         <p class="subtitle">Fill in your details to get started</p>
 
-        <form id="signupForm" novalidate>
+        <?php if ($error): ?>
+          <div class="alert alert-danger show">
+            <i class="fas fa-exclamation-circle"></i> <?= $error ?>
+          </div>
+        <?php endif; ?>
+        <?php if ($success): ?>
+          <div class="alert alert-success show">
+            <i class="fas fa-check-circle"></i> <?= $success ?>
+          </div>
+        <?php endif; ?>
+
+        <form method="POST">
           <div class="form-group">
-            <label for="signupName">Full Name</label>
+            <label for="name">Full Name</label>
             <div class="input-icon-wrapper">
               <i class="fas fa-user input-icon"></i>
-              <input type="text" id="signupName" class="form-control" placeholder="John Doe" required />
+              <input type="text" id="name" name="name" class="form-control" placeholder="John Doe" required />
             </div>
-            <div class="form-error" id="nameError">Name must be at least 2 characters</div>
           </div>
 
           <div class="form-group">
-            <label for="signupEmail">Email Address</label>
+            <label for="email">Email Address</label>
             <div class="input-icon-wrapper">
               <i class="fas fa-envelope input-icon"></i>
-              <input type="email" id="signupEmail" class="form-control" placeholder="you@example.com" required />
+              <input type="email" id="email" name="email" class="form-control" placeholder="you@example.com" required />
             </div>
-            <div class="form-error" id="signupEmailError">Please enter a valid email address</div>
           </div>
 
           <div class="form-group">
-            <label for="signupPassword">Password</label>
+            <label for="password">Password</label>
             <div class="input-icon-wrapper">
               <i class="fas fa-lock input-icon"></i>
-              <input type="password" id="signupPassword" class="form-control" placeholder="Min. 6 characters" required />
-              <button type="button" class="password-toggle" onclick="togglePassword('signupPassword', this)">
+              <input type="password" id="password" name="password" class="form-control" placeholder="Min. 6 characters" required />
+              <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
                 <i class="fas fa-eye"></i>
               </button>
             </div>
-            <div class="form-error" id="signupPasswordError">Password must be at least 6 characters</div>
           </div>
 
           <div class="form-group">
-            <label for="confirmPassword">Confirm Password</label>
+            <label for="confirm_password">Confirm Password</label>
             <div class="input-icon-wrapper">
               <i class="fas fa-lock input-icon"></i>
-              <input type="password" id="confirmPassword" class="form-control" placeholder="Re-enter your password" required />
-              <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+              <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Re-enter your password" required />
+              <button type="button" class="password-toggle" onclick="togglePassword('confirm_password', this)">
                 <i class="fas fa-eye"></i>
               </button>
             </div>
-            <div class="form-error" id="confirmError">Passwords do not match</div>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-block btn-lg mt-1" id="signupBtn">
+          <button type="submit" class="btn btn-primary btn-block btn-lg mt-1">
             Create Account
           </button>
         </form>
 
         <div class="auth-switch">
-          Already have an account? <a href="login.html">Sign in</a>
+          Already have an account? <a href="login.php">Sign in</a>
         </div>
       </div>
     </div>
@@ -88,7 +132,7 @@
   <!-- Bootstrap Generic Modal -->
   <div class="modal fade" id="appModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content" style="background: var(--bg-card); color: var(--text); border: 1px solid var(--border);">
+      <div class="modal-content" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border);">
         <div class="modal-header" style="border-bottom: 1px solid var(--border);">
           <h5 class="modal-title" id="appModalTitle">Alert</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -103,7 +147,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/theme.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/theme.js"></script>
 </body>
 </html>

@@ -206,7 +206,7 @@ function showResults() {
   const percentage = Math.round((correct / total) * 100);
   const timeTaken = Math.round((Date.now() - quizState.startTime) / 1000);
 
-  // Save score
+  // Save score to localStorage
   Auth.saveScore(correct, total, quizState.difficulty, timeTaken);
 
   // Toggle screens

@@ -5,18 +5,15 @@ const Auth = {
   USERS_KEY: 'tq_users',
   SESSION_KEY: 'tq_session',
 
-  // Get all registered users
   getUsers() {
     const data = localStorage.getItem(this.USERS_KEY);
     return data ? JSON.parse(data) : [];
   },
 
-  // Save users array
   saveUsers(users) {
     localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
   },
 
-  // Register a new user
   signup(name, email, password) {
     const users = this.getUsers();
     const exists = users.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -27,7 +24,7 @@ const Auth = {
       id: Date.now().toString(),
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      password: password, // In production, hash this!
+      password: password,
       createdAt: new Date().toISOString(),
       scores: []
     };
@@ -36,7 +33,6 @@ const Auth = {
     return { success: true, message: 'Account created successfully' };
   },
 
-  // Login user
   login(email, password) {
     const users = this.getUsers();
     const user = users.find(
@@ -45,30 +41,25 @@ const Auth = {
     if (!user) {
       return { success: false, message: 'Invalid email or password' };
     }
-    // Store session
     const session = { id: user.id, name: user.name, email: user.email };
     localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
     return { success: true, user: session };
   },
 
-  // Get current logged-in user
   getCurrentUser() {
     const data = localStorage.getItem(this.SESSION_KEY);
     return data ? JSON.parse(data) : null;
   },
 
-  // Logout
   logout() {
     localStorage.removeItem(this.SESSION_KEY);
-    window.location.href = 'login.html';
+    window.location.href = 'auth/login.php';
   },
 
-  // Check if user is logged in
   isLoggedIn() {
     return this.getCurrentUser() !== null;
   },
 
-  // Save score for current user
   saveScore(score, total, difficulty, timeTaken) {
     const user = this.getCurrentUser();
     if (!user) return;
@@ -87,7 +78,6 @@ const Auth = {
     this.saveUsers(users);
   },
 
-  // Get leaderboard data (top scores)
   getLeaderboard(limit = 10) {
     const users = this.getUsers();
     const entries = [];
@@ -109,7 +99,6 @@ const Auth = {
     return entries.slice(0, limit);
   },
 
-  // Get total user count
   getUserCount() {
     return this.getUsers().length;
   }
@@ -160,7 +149,6 @@ function showBootstrapConfirm(title, message, onConfirm) {
   modal.show();
 }
 
-// ========== Password Toggle ==========
 function togglePassword(inputId, btn) {
   const input = document.getElementById(inputId);
   const icon = btn.querySelector('i');
@@ -173,7 +161,6 @@ function togglePassword(inputId, btn) {
   }
 }
 
-// ========== Update Navbar Auth State ==========
 function updateNavAuth() {
   const user = Auth.getCurrentUser();
   const authLinks = document.getElementById('navAuthLinks');
@@ -194,56 +181,34 @@ function updateNavAuth() {
   }
 }
 
-// ========== User Dropdown (simple) ==========
 function toggleUserDropdown() {
   showBootstrapConfirm('Log Out', 'Do you want to log out?', function () {
     Auth.logout();
   });
 }
 
-// ========== Form Validation Helpers ==========
 function showError(elementId, show = true) {
   const el = document.getElementById(elementId);
-  if (el) {
-    el.classList.toggle('show', show);
-  }
-}
-
-function showAlert(alertId, message, show = true) {
-  const el = document.getElementById(alertId);
-  const msgEl = document.getElementById(alertId + 'Msg');
-  if (el) {
-    el.classList.toggle('show', show);
-    if (msgEl && message) msgEl.textContent = message;
-  }
+  if (el) el.classList.toggle('show', show);
 }
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// ========== Login Form Handler ==========
+// ========== Form Handlers ==========
 document.addEventListener('DOMContentLoaded', () => {
-  // Update navbar on all pages
   updateNavAuth();
 
-  // ---- LOGIN ----
+  // Login
   const loginForm = document.getElementById('loginForm');
   if (loginForm) {
-    // Redirect if already logged in
-    if (Auth.isLoggedIn()) {
-      window.location.href = 'index.html';
-      return;
-    }
-
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      let valid = true;
-
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
+      let valid = true;
 
-      // Validate email
       if (!email || !isValidEmail(email)) {
         showError('emailError', true);
         valid = false;
@@ -251,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showError('emailError', false);
       }
 
-      // Validate password
       if (!password) {
         showError('passwordError', true);
         valid = false;
@@ -261,35 +225,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!valid) return;
 
-      // Attempt login
       const result = Auth.login(email, password);
       if (result.success) {
-        window.location.href = 'index.html';
+        window.location.href = 'index.php';
       } else {
         showBootstrapAlert('Login Failed', result.message, 'error');
       }
     });
   }
 
-  // ---- SIGNUP ----
+  // Signup
   const signupForm = document.getElementById('signupForm');
   if (signupForm) {
-    // Redirect if already logged in
-    if (Auth.isLoggedIn()) {
-      window.location.href = 'index.html';
-      return;
-    }
-
     signupForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      let valid = true;
-
       const name = document.getElementById('signupName').value.trim();
       const email = document.getElementById('signupEmail').value.trim();
       const password = document.getElementById('signupPassword').value;
       const confirm = document.getElementById('confirmPassword').value;
+      let valid = true;
 
-      // Validate name
       if (!name || name.length < 2) {
         showError('nameError', true);
         valid = false;
@@ -297,7 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showError('nameError', false);
       }
 
-      // Validate email
       if (!email || !isValidEmail(email)) {
         showError('signupEmailError', true);
         valid = false;
@@ -305,7 +259,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showError('signupEmailError', false);
       }
 
-      // Validate password
       if (!password || password.length < 6) {
         showError('signupPasswordError', true);
         valid = false;
@@ -313,7 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showError('signupPasswordError', false);
       }
 
-      // Confirm password
       if (password !== confirm) {
         showError('confirmError', true);
         valid = false;
@@ -323,13 +275,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!valid) return;
 
-      // Attempt signup
       const result = Auth.signup(name, email, password);
       if (result.success) {
         signupForm.reset();
-        const modal = showBootstrapAlert('Account Created!', 'Your account has been created successfully. Redirecting to login...', 'success');
+        showBootstrapAlert('Account Created!', 'Your account has been created successfully. Redirecting to login...', 'success');
         setTimeout(() => {
-          window.location.href = 'login.html';
+          window.location.href = 'auth/login.php';
         }, 2000);
       } else {
         showBootstrapAlert('Sign Up Failed', result.message, 'error');
