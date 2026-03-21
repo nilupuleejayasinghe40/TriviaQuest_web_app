@@ -55,6 +55,16 @@ trivia/
     └── database.sql    # SQL Export File
 
     ---
+---
+
+## How to Run the Project
+
+1. **Install XAMPP:** Download and install a local server environment like **XAMPP**.
+2. **Start Services:** Open the XAMPP Control Panel and start the **Apache** and **MySQL** modules.
+3. **Move Project Files:** Copy your project folder (e.g., `trivia`) into the `C:\xampp\htdocs\` directory.
+4. **Create Database:** Open your browser, go to **phpMyAdmin** (`http://localhost/phpmyadmin`), and create a new database named `triviaquest`.
+5. **Import Data:** Select the `triviaquest` database, click the **Import** tab, and choose the `database.sql` file located in your project's `database/` folder.
+6. **Launch Application:** Access the quiz by navigating to `http://localhost/trivia/index.php` in your web browser.
 
 ## How the Quiz Works
 
